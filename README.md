@@ -3,6 +3,7 @@
 초기 인프라 시스템 구축용 저장소
 
 ## Used
+
 * Docker-compose
 * nginx
 * ldap
@@ -11,6 +12,7 @@
 * api-doc
 
 ### Docker-compose
+
 ```
 # Docker
 # https://docs.docker.com/install/
@@ -31,4 +33,11 @@ $ sudo chmod +x /usr/local/bin/docker-compose
 $ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 $ docker-compose --version
 ```
+
 * 19.10 기준 Docker-Compose 1.24.1
+
+###  설정
+
+* [api-doc](./api-doc)
+* [ldap](./ldap)
+* [nginx](./nginx)
