@@ -10,6 +10,7 @@
 * jenkins
 * nexus 3.0
 * api-doc
+* mailu
 
 ### Docker-compose
 
@@ -41,3 +42,11 @@ $ docker-compose --version
 * [api-doc](./api-doc)
 * [ldap](./ldap)
 * [nginx](./nginx)
+
+### 명령어
+
+```
+# 도커 컨테이너 모두 정지 및 삭제
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+```
