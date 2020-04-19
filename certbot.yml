@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+    #   - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
+    #   - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"

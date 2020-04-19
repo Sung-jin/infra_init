@@ -1,97 +1,33 @@
-version: '3'
+version: '3.7'
 
 services:
   nginx:
     container_name: nginx
     image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      # - $ROOT_PATH/nginx:/etc/nginx/conf.d
+      # - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
+      # - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
+      # - $ROOT_PATH/nginx/api-doc/dist:/usr/share/nginx/html
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/api-doc/dist:/usr/share/nginx/html
     ports:
       - "80:80"
-      - "81:81"
-      - "82:82"
-      - "433:433"
-    volumes:
-      - $ROOT_PATH/nginx/conf:/etc/nginx/conf.d:ro
-      - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
-      - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
-      - $ROOT_PATH/nginx/api-doc/dist:/usr/share/nginx/html
-      mark the db services as a dependency
-      
-    # command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-  
-  # certbot:
-  #   image: certbot/certbot
-  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
-  ldap:
-    container_name: ldap
-    image: osixia/phpldapadmin
-    expose: ["80", "443"]
+      - "443:443"
+    networks:
+      - nginx
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   jenkins:
     container_name: jenkins
     image: jenkins:alpine
     expose: ["8080"]
-    build:
-      context: .
-      dockerfile: ./jenkins/Dockerfile
-    volumes:
-      - ./jenkins/jenkins_home/secrets/initialAdminPassword:/var/jenkins_home/secrets/initialAdminPassword
-    # TODO : 기본 비밀번호 설정 연
-
-  db:
-    container_name: mysql
-    image: mysql:8
-    restart: always
-    environment:
-      MYSQL_DATABASE: 'team_play'
-      MYSQL_USER: 'player'
-      MYSQL_PASSWORD: '1234'
-      MYSQL_ROOT_PASSWORD: '1234'
-    ports:
-      - "3306:3306"
-
-
-# services:
-#   ldap:
-#     container_name: ldap
-#     image: osixia/phpldapadmin
-#     expose: ["80", "443"]
-
-#   jenkins:
-#     container_name: jenkins
-#     image: jenkins:alpine
-#     # build:
-#       # context: .
-#       # dockerfile: ./jenkins/Dockerfile
-#     # volumes:
-#     #   - ./jenkins/jenkins_home/secrets/initialAdminPassword:/var/jenkins_home/secrets/initialAdminPassword
-#     # TODO : 기본 비밀번호 설정 연
-
-#   nginx:
-#     container_name: nginx
-#     image: nginx:alpine
-#     ports:
-#       - "80:80"
-#       - "443:443"
-#     volumes:
-#       - $ROOT_PATH/nginx/conf:/etc/nginx/conf.d
-#       - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
-#       - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
-#     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-
-  # certbot:
-  #   container_name: certbot
-  #   image: certbot/certbot
-  #   volumes:
-  #     - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
-  #     - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
-  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
-
-
-  # nexus:
-  #   image: sonatype/nexus3
-  #   volumes:
-  #     - "nexus-data:/nexus-data"
-  #   ports:
-  #     - "8081:8081
+    networks:
+      - nginx
+  
+networks:
+  nginx:
+    driver: bridge
