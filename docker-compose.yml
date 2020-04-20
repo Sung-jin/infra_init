@@ -6,14 +6,10 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     volumes:
-      # - $ROOT_PATH/nginx:/etc/nginx/conf.d
-      # - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
-      # - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
-      # - $ROOT_PATH/nginx/api-doc/dist:/usr/share/nginx/html
-      - ./nginx/conf:/etc/nginx/conf.d
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/api-doc/dist:/usr/share/nginx/html
+      - $ROOT_PATH/nginx/conf:/etc/nginx/conf.d
+      - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
+      - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
+      - $ROOT_PATH/nginx/api-doc/dist:/usr/share/nginx/html
     ports:
       - "80:80"
       - "443:443"

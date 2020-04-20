@@ -12,26 +12,32 @@ fi
 cd $(dirname "$0")
 ROOT_PATH=$(pwd)
 
-# mkdir -p $ROOT_PATH/nginx/certbot/conf $ROOT_PATH/nginx/certbot/www && rm -rf $ROOT_PATH/nginx/certbot/conf/* $ROOT_PATH/nginx/certbot/www/*
+case "$1" in
+ 1) DOMAIN="fonnie.xyz" ;;
+ 2) DOMAIN="fonnie.shop" ;;
+ 3) DOMAIN="osj4872.shop" ;;
+ *)
+  echo "Please select the right domain or select the right domain."
+  echo "1: fonnie.xyz"
+  echo "2: fonnie.shop"
+  echo "3: osj4872.shop"
+  exit
+esac
+
+mkdir -p $ROOT_PATH/nginx/certbot/conf $ROOT_PATH/nginx/certbot/www && rm -rf $ROOT_PATH/nginx/certbot/conf/* $ROOT_PATH/nginx/certbot/www/*
 
 if ! [ -x "$(command -v docker-compose)" ]; then
   echo 'Error: docker-compose is not installed.' >&2
   exit 1
 fi
 
-domains=(ci.osj4872.shop)
+# domains=(ci.$DOMAIN api.$DOMAIN)
+domains=(ci.$DOMAIN)
+sed -i "s/DOMAIN/$DOMAIN/g" $ROOT_PATH/nginx/conf/default.conf
 rsa_key_size=4096
-data_path="./nginx/certbot"
+data_path="$ROOT_PATH/nginx/certbot"
 email="" # Adding a valid address is strongly recommended
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
-
-if [ -d "$data_path" ]; then
-  read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision
-  if [ "$decision" != "Y" ] && [ "$decision" != "y" ]; then
-    exit
-  fi
-fi
-
 
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
   echo "### Downloading recommended TLS parameters ..."
@@ -41,30 +47,30 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   echo
 fi
 
-echo "### Creating dummy certificate for $domains ..."
-path="/etc/letsencrypt/live/$domains"
-mkdir -p "$data_path/conf/live/$domains"
-ROOT_PATH=$ROOT_PATH docker-compose -f certbot.yml run --rm --entrypoint "\
-  openssl req -x509 -nodes -newkey rsa:1024 -days 1\
-    -keyout '$path/privkey.pem' \
-    -out '$path/fullchain.pem' \
-    -subj '/CN=localhost'" certbot
-echo
-
-# echo "### Starting nginx ..."
-# docker-compose up --force-recreate -d nginx
-# echo
+for domain in "${domains[@]}"; do
+  echo "### Creating dummy certificate for $domain ..."
+  path="/etc/letsencrypt/live/$domain"
+  mkdir -p "$data_path/conf/live/$domain"
+  ROOT_PATH=$ROOT_PATH docker-compose -f certbot.yml run --rm --entrypoint "\
+    openssl req -x509 -nodes -newkey rsa:1024 -days 1\
+      -keyout '$path/privkey.pem' \
+      -out '$path/fullchain.pem' \
+      -subj '/CN=localhost'" certbot
+  echo
+done
 
 echo "### Starting Services ..."
 ROOT_PATH=$ROOT_PATH docker-compose up --force-recreate -d
 echo
 
-echo "### Deleting dummy certificate for $domains ..."
-ROOT_PATH=$ROOT_PATH docker-compose -f certbot.yml run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/$domains && \
-  rm -Rf /etc/letsencrypt/archive/$domains && \
-  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
-echo
+for domain in "${domains[@]}"; do
+  echo "### Deleting dummy certificate for $domain ..."
+  ROOT_PATH=$ROOT_PATH docker-compose -f certbot.yml run --rm --entrypoint "\
+    rm -Rf /etc/letsencrypt/live/$domain && \
+    rm -Rf /etc/letsencrypt/archive/$domain && \
+    rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot
+  echo
+done
 
 
 echo "### Requesting Let's Encrypt certificate for $domains ..."
