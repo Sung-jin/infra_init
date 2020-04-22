@@ -1,44 +1,17 @@
-version: '3.7'
+version: '3'
 
 services:
-    nginx-proxy:
-        container_name: nginx-proxy
-        image: jwilder/nginx-proxy
-        restart: unless-stopped
-        ports:
-            - "80:80"
-            - "443:443"
-        volumes:
-            - nginx-proxy-volume:/etc/nginx/certs
-            - nginx-proxy-volume:/etc/nginx/vhost.d
-            - ./nginx/html/dist:/usr/share/nginx/html
-            - /var/run/docker.sock:/tmp/docker.sock:ro
-
-    nginx-proxy-letsencrypt:
-        container_name: nginx-proxy-letsencrypt
-        image: jrcs/letsencrypt-nginx-proxy-companion
-        restart: unless-stopped
-        volumes:
-            - nginx-proxy-volume:/etc/nginx/certs
-            - nginx-proxy-volume:/etc/nginx/vhost.d
-            - ./nginx/html/dist:/usr/share/nginx/html
-            - /var/run/docker.sock:/tmp/docker.sock:ro
-
-    jenkins:
-        container_name: jenkins
-        image: jenkins:alpine
-        environment:
-            - VIRTUAL_HOST=ci.fonnie.shop
-            - LETSENCRYPT_HOST=ci.fonnie.shop
-            # - LETSENCRYPT_EMAIL=mail@yourdomain.tld
-            - VIRTUAL_PORT=8080
-        # expose: ["8080"]
-        # networks:
-        #     - nginx
-
-volumes:
-    nginx-proxy-volume:
-
+  jenkins:
+    container_name: jenkins
+    image: jenkins:alpine
+    restart: unless-stopped
+    environment:
+      - VIRTUAL_HOST=ci.fonnie.shop
+      - LETSENCRYPT_HOST=ci.fonnie.shop
+      - LETSENCRYPT_EMAIL=osj4872@gmail.com
+      - VIRTUAL_PORT=8080
+        
 networks:
-    nginx:
-        driver: bridge
+  default:
+    external:
+      name: nginx-proxy
