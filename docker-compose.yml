@@ -1,29 +1,113 @@
 version: '3.7'
 
 services:
-  nginx:
-    container_name: nginx
-    image: nginx:alpine
-    restart: unless-stopped
-    volumes:
-      - $ROOT_PATH/nginx/conf:/etc/nginx/conf.d
-      - $ROOT_PATH/nginx/certbot/conf:/etc/letsencrypt
-      - $ROOT_PATH/nginx/certbot/www:/var/www/certbot
-      - $ROOT_PATH/nginx/api-doc/dist:/usr/share/nginx/html
+  nginx-proxy:
+    container_name: nginx-proxy
+    image: jwilder/nginx-proxy
     ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - nginx
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+      - 80:80
+      - 443:443
+    restart: always
+    volumes:
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
 
-  jenkins:
-    container_name: jenkins
-    image: jenkins:alpine
-    expose: ["8080"]
-    networks:
-      - nginx
+  nginx-proxy-letsencrypt:
+    container_name: nginx-proxy-letsencrypt
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    restart: always
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - /var/run/docker.sock:/var/run/docker.sock:ro
   
+  # api-doc:
+  #   container_name: api-doc
+  #   image: nginx:alpine
+  #   volumes:
+  #     - ./nginx/html:/usr/share/nginx/html
+  #   environment:
+  #     - VIRTUAL_HOST=api.DOAMIN
+  #     - LETSENCRYPT_HOST=api.DOMAIN
+  #     - LETSENCRYPT_EMAIL=EMAIL
+  #     - VIRTUAL_PORT=80
+
+  # jenkins:
+  #   container_name: jenkins
+  #   image: jenkins:alpine
+  #   restart: unless-stopped
+  #   volume :
+  #     - $ROOT_PATH/jenkins/jenkins_home/:/var/jenkins_home
+  #   environment:
+  #     - VIRTUAL_HOST=ci.DOAMIN
+  #     - LETSENCRYPT_HOST=ci.DOAMIN
+  #     - LETSENCRYPT_EMAIL=EMAIL
+  #     - VIRTUAL_PORT=8080
+    
+  # grafana:
+  #   container_name: grafana
+  #   image: grafana/grafana
+  #   restart: unless-stopped
+  #   environment:
+  #     - VIRTUAL_HOST=monitor.DOAMIN
+  #     - LETSENCRYPT_HOST=monitor.DOAMIN
+  #     - LETSENCRYPT_EMAIL=EMAIL
+  #     - VIRTUAL_PORT=3000
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}
+    volumes:
+      - $ROOT_PATH/elk/elasticsearch-conf/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - $ROOT_PATH/elk/elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx512m -Xms512m"
+    networks:
+      - elk
+
+  logstash:
+    container_name: logstash
+    image: docker.elastic.co/logstash/logstash:${ELK_VERSION}
+    volumes:
+      - $ROOT_PATH/elk/logstash-conf/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - $ROOT_PATH/elk/logstash-conf/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5000:5000/tcp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx512m -Xms512m"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:${ELK_VERSION}
+    volumes:
+      - $ROOT_PATH/elk/kibana-conf/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+volumes:
+  html:
+  certs:
+  vhost:
+
 networks:
-  nginx:
+  elk:
     driver: bridge
