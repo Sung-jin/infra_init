@@ -12,15 +12,16 @@ fi
 cd $(dirname "$0")
 ROOT_PATH=$(pwd)
 
-if [ -f "$ROOT_PATH/cloud-config-server" ]
+if [ $(find $ROOT_PATH/cloud-config-server/docker -name cloud-config-server) ]
 then
-	cd cloud-config-server && \
+  cd cloud-config-server && \
     git clone https://github.com/Sung-jin/toy_Project.git && \
     mv toy_Project/spring/cloud-config-server/* . && \
     rm -rf toy_Project && \
     ./gradlew build && \
     mv build/libs/* docker/cloud-config-server.jar && \
-    rm -rf $(find . -not -path '.' -not -path './docker' -not -path './docker/*')
+    rm -rf $(find . -not -path '.' -not -path './docker' -not -path './docker/*') && \
+    cd $ROOT_PATH
 else
 	echo "config key doesn't exist. plz check key."
   exit
@@ -41,6 +42,7 @@ case "$1" in
 esac
 
 chown 1000:1000 $ROOT_PATH/elk/elasticsearch/data
+chown 1000:1000 $ROOT_PATH/jenkins/jenkins_home
 
 sed -i "s/DOMAIN/$DOMAIN/g" $ROOT_PATH/docker-compose.yml
 sed -i "s/MY_EMAIL/osj4872@gmail.com/g" $ROOT_PATH/docker-compose.yml
