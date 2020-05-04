@@ -49,4 +49,7 @@ $ docker-compose --version
 # 도커 컨테이너 모두 정지 및 삭제
 docker stop $(docker ps -a -q)
 docker rm $(docker ps -a -q)
+
+# 도커 이미지 이름 바탕으로 삭제
+docker rmi $(docker images |grep 'imagename')
 ```

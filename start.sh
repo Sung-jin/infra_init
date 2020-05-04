@@ -12,6 +12,20 @@ fi
 cd $(dirname "$0")
 ROOT_PATH=$(pwd)
 
+if [ -f "$ROOT_PATH/cloud-config-server" ]
+then
+	cd cloud-config-server && \
+    git clone https://github.com/Sung-jin/toy_Project.git && \
+    mv toy_Project/spring/cloud-config-server/* . && \
+    rm -rf toy_Project && \
+    ./gradlew build && \
+    mv build/libs/* docker/cloud-config-server.jar && \
+    rm -rf $(find . -not -path '.' -not -path './docker' -not -path './docker/*')
+else
+	echo "config key doesn't exist. plz check key."
+  exit
+fi
+
 case "$1" in
  1) DOMAIN="fonnie.xyz" ;;
  2) DOMAIN="fonnie.shop" ;;
