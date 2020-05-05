@@ -129,7 +129,8 @@ networks:
   elk:
     driver: bridge
   nginx-proxy:
-    driver: bridge
+    external:
+      name: nginx-proxy
 
 volumes:
   html:
